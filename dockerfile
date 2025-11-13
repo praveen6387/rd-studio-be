@@ -9,4 +9,4 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["gunicorn", "rdstudio.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "rd_studio_backend.wsgi:application", "--bind", "0.0.0.0:8000"]
