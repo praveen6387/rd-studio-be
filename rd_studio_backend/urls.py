@@ -19,9 +19,12 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+import rd_studio_backend.view as views
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("base.urls")),
+    path("api/health/", views.HealthView.as_view(), name="health"),
 ]
 
 if settings.DEBUG:
