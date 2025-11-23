@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from base.models import MediaLibrary
-from base.utils.s3_utils import upload_file_to_s3
+from base.utils.s3_utils import get_s3_client, upload_file_to_s3
 from base.views.operation.serializers import MediaLibrarySerializer
 
 
@@ -38,12 +38,19 @@ class MediaView(APIView):
             # base_url = "https://picsum.photos/2500/2500"
             media_unique_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
 
+            # Create S3 client once and reuse for all uploads in this request
+            s3_client = get_s3_client()
+
             # Upload files to S3 and prepare media items data
             media_items_data = []
             for file in media_items:
                 try:
-                    # Upload file to S3
-                    file_url = upload_file_to_s3(file, folder_name=f"media_library/{media_unique_id}")
+                    # Upload file to S3, reusing the same client
+                    file_url = upload_file_to_s3(
+                        file,
+                        folder_name=f"media_library/{media_unique_id}",
+                        s3_client=s3_client,
+                    )
                     # # file_url = "https://picsum.photos/200"
 
                     # response = requests.get(base_url, allow_redirects=True)
