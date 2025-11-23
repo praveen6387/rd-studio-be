@@ -35,20 +35,21 @@ class MediaView(APIView):
             if not media_items:
                 return Response({"message": "media_items are required"}, status=400)
 
-            base_url = "https://picsum.photos/2500/2500"
+            # base_url = "https://picsum.photos/2500/2500"
+            media_unique_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
 
             # Upload files to S3 and prepare media items data
             media_items_data = []
             for file in media_items:
                 try:
                     # Upload file to S3
-                    # file_url = upload_file_to_s3(file, folder_name="media_library")
-                    # file_url = "https://picsum.photos/200"
+                    file_url = upload_file_to_s3(file, folder_name=f"media_library/{media_unique_id}")
+                    # # file_url = "https://picsum.photos/200"
 
-                    response = requests.get(base_url, allow_redirects=True)
+                    # response = requests.get(base_url, allow_redirects=True)
 
-                    # The final image URL after redirection
-                    file_url = response.url
+                    # # The final image URL after redirection
+                    # file_url = response.url
 
                     # Prepare media item data
                     media_item_data = {
@@ -61,8 +62,6 @@ class MediaView(APIView):
                 except Exception as e:
                     return Response({"message": f"Failed to upload file {file.name}: {str(e)}"}, status=500)
 
-            media_unique_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
-
             # Prepare data for serializer
             serializer_data = {
                 "media_type": int(media_type),
@@ -71,8 +70,6 @@ class MediaView(APIView):
                 "media_items": media_items_data,
                 "media_unique_id": media_unique_id,
             }
-
-            print("serializer_data", serializer_data)
 
             # Create media library with items
             serializer = MediaLibrarySerializer(data=serializer_data)

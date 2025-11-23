@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from base.models import MediaLibrary, MediaLibraryItem
-from base.utils.s3_utils import upload_file_to_s3
 
 
 class MediaLibraryItemSerializer(serializers.ModelSerializer):

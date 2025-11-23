@@ -35,7 +35,7 @@ def upload_file_to_s3(file, folder_name="media"):
             file,
             settings.AWS_STORAGE_BUCKET_NAME,
             s3_key,
-            ExtraArgs={"ContentType": file.content_type, "ACL": "public-read"},
+            ExtraArgs={"ContentType": file.content_type},
         )
 
         # Return the URL
