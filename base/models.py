@@ -147,4 +147,4 @@ class MediaLibraryItem(models.Model):
 
     class Meta:
         db_table = "media_library_items"
-        ordering = ["-id"]
+        ordering = ["id"]
