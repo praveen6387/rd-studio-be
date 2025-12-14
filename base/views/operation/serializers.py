@@ -66,9 +66,22 @@ class MediaLibrarySerializer(serializers.ModelSerializer):
         return media_library
 
     def update(self, instance, validated_data):
-        media_items_data = validated_data.pop("media_items", [])
-        media_items = [
-            MediaLibraryItem(media_library=instance, **media_item_data) for media_item_data in media_items_data
-        ]
-        MediaLibraryItem.objects.bulk_create(media_items)
+        # Pop media_items if provided. Using None allows us to distinguish between:
+        # - not provided (None) → don't touch existing related items
+        # - provided as [] → clear existing related items
+        media_items_data = validated_data.pop("media_items", None)
+
+        # Update primitive fields on the instance
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # If media_items was provided in the payload, replace existing related items
+        if media_items_data:
+            MediaLibraryItem.objects.filter(media_library=instance).delete()
+            media_items = [
+                MediaLibraryItem(media_library=instance, **media_item_data) for media_item_data in media_items_data
+            ]
+            MediaLibraryItem.objects.bulk_create(media_items)
+
         return instance

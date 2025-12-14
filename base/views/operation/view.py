@@ -90,11 +90,11 @@ class MediaView(APIView):
             # Create media library with items
             serializer = MediaLibrarySerializer(data=serializer_data)
             if serializer.is_valid():
-                media_library = serializer.save()
+                serializer.save()
                 return Response(
                     {
                         "message": "Media library created successfully",
-                        "data": MediaLibrarySerializer(media_library).data,
+                        "data": serializer.data,
                     },
                     status=201,
                 )
@@ -108,13 +108,48 @@ class MediaView(APIView):
     def put(self, request, media_id):
         try:
             media_library = MediaLibrary.objects.get(id=media_id, is_active=True)
-            serializer = MediaLibrarySerializer(media_library, data=request.data, partial=True)
+            media_items = request.FILES.getlist("media_items")
+            media_unique_id = media_library.media_unique_id
+            # Create S3 client once and reuse for all uploads in this request
+            s3_client = get_s3_client()
+
+            # Upload files to S3 and prepare media items data
+            media_items_data = []
+            for file in media_items:
+                try:
+                    # Upload file to S3, reusing the same client
+                    file_url = upload_file_to_s3(
+                        file,
+                        folder_name=f"media_library/{media_unique_id}",
+                        s3_client=s3_client,
+                    )
+                    # Prepare media item data
+                    media_item_data = {
+                        "media_url": file_url,
+                        "media_item_title": file.name,
+                        "media_item_description": f"Uploaded file: {file.name}",
+                    }
+                    media_items_data.append(media_item_data)
+
+                except Exception as e:
+                    return Response({"message": f"Failed to upload file {file.name}: {str(e)}"}, status=500)
+
+            # Prepare data for serializer
+            serializer_data = {
+                "media_type": int(media_library.media_type),
+                "media_title": request.data.get("media_title", media_library.media_title),
+                "media_description": request.data.get("media_description", media_library.media_description),
+                "media_items": media_items_data,
+                "media_unique_id": media_unique_id,
+            }
+
+            serializer = MediaLibrarySerializer(media_library, data=serializer_data, partial=True)
             if serializer.is_valid():
-                media_library = serializer.save()
+                serializer.save()
                 return Response(
                     {
                         "message": "Media library updated successfully",
-                        "data": MediaLibrarySerializer(media_library).data,
+                        "data": serializer.data,
                     },
                     status=200,
                 )
@@ -125,8 +160,16 @@ class MediaView(APIView):
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
-    def delete(self, request):
-        return Response("delete method testing")
+    def delete(self, request, media_id):
+        try:
+            media_library = MediaLibrary.objects.get(id=media_id, is_active=True)
+            media_library.is_active = False
+            media_library.save()
+            return Response({"message": "Media library deleted successfully"}, status=200)
+        except MediaLibrary.DoesNotExist:
+            return Response({"message": "Media library not found"}, status=404)
+        except Exception as e:
+            return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
 
 class ExternalMediaIdView(APIView):
@@ -143,7 +186,6 @@ class ExternalMediaIdView(APIView):
                 .prefetch_related("media_library_items")
                 .first()
             )
-            print("media_libraries", media_library)
             media_libraries = MediaLibrarySerializer(media_library)
             return Response({"message": "media successfully retrieved", "data": media_libraries.data})
         except Exception as e:
