@@ -2,6 +2,7 @@ import random
 import string
 
 import requests
+from django.db.models import Q
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,10 +18,26 @@ class MediaView(APIView):
     permission_classes = [IsAuthenticated]
 
     # get all media
-    def get(self, request):
-        media_libraries = MediaLibrary.objects.prefetch_related("media_library_items").order_by("-id")
-        media_libraries = MediaLibrarySerializer(media_libraries, many=True)
-        return Response({"message": "media successfully retrieved", "data": media_libraries.data})
+    def get(self, request, media_id=None):
+        try:
+            has_single_media = False
+            filter_kwargs = Q(is_active=True)
+            if media_id:
+                filter_kwargs &= Q(id=media_id)
+                has_single_media = True
+
+            media_libraries = (
+                MediaLibrary.objects.filter(filter_kwargs).prefetch_related("media_library_items").order_by("-id")
+            )
+            if has_single_media:
+                media_libraries = media_libraries.first()
+            else:
+                media_libraries = media_libraries.all()
+
+            media_libraries = MediaLibrarySerializer(media_libraries, many=not has_single_media)
+            return Response({"message": "media successfully retrieved", "data": media_libraries.data})
+        except Exception as e:
+            return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
     # save new media
     def post(self, request):
@@ -35,7 +52,6 @@ class MediaView(APIView):
             if not media_items:
                 return Response({"message": "media_items are required"}, status=400)
 
-            # base_url = "https://picsum.photos/2500/2500"
             media_unique_id = "".join(random.choices(string.ascii_letters + string.digits, k=20))
 
             # Create S3 client once and reuse for all uploads in this request
@@ -51,13 +67,6 @@ class MediaView(APIView):
                         folder_name=f"media_library/{media_unique_id}",
                         s3_client=s3_client,
                     )
-                    # # file_url = "https://picsum.photos/200"
-
-                    # response = requests.get(base_url, allow_redirects=True)
-
-                    # # The final image URL after redirection
-                    # file_url = response.url
-
                     # Prepare media item data
                     media_item_data = {
                         "media_url": file_url,
@@ -96,8 +105,25 @@ class MediaView(APIView):
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
     # update media
-    def put(self, request):
-        return Response("put method testing")
+    def put(self, request, media_id):
+        try:
+            media_library = MediaLibrary.objects.get(id=media_id, is_active=True)
+            serializer = MediaLibrarySerializer(media_library, data=request.data, partial=True)
+            if serializer.is_valid():
+                media_library = serializer.save()
+                return Response(
+                    {
+                        "message": "Media library updated successfully",
+                        "data": MediaLibrarySerializer(media_library).data,
+                    },
+                    status=200,
+                )
+            else:
+                return Response({"message": "Media library update failed", "errors": serializer.errors}, status=400)
+        except MediaLibrary.DoesNotExist:
+            return Response({"message": "Media library not found"}, status=404)
+        except Exception as e:
+            return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
     def delete(self, request):
         return Response("delete method testing")

@@ -5,5 +5,6 @@ from base.views.operation.view import ExternalMediaIdView, MediaView
 # api/base/operation/ ->
 urlpatterns = [
     path("media/", MediaView.as_view(), name="media"),
+    path("media/<int:media_id>/", MediaView.as_view(), name="media-detail"),
     path("media/external/<str:media_unique_id>/", ExternalMediaIdView.as_view(), name="external-media-id"),
 ]

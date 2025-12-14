@@ -54,8 +54,6 @@ class MediaLibrarySerializer(serializers.ModelSerializer):
         # Extract media_items from validated_data
         media_items_data = validated_data.pop("media_items", [])
 
-        print("validated_data", validated_data)
-
         # Create the MediaLibrary instance
         media_library = MediaLibrary.objects.create(**validated_data)
 
@@ -66,3 +64,11 @@ class MediaLibrarySerializer(serializers.ModelSerializer):
         MediaLibraryItem.objects.bulk_create(media_items)
 
         return media_library
+
+    def update(self, instance, validated_data):
+        media_items_data = validated_data.pop("media_items", [])
+        media_items = [
+            MediaLibraryItem(media_library=instance, **media_item_data) for media_item_data in media_items_data
+        ]
+        MediaLibraryItem.objects.bulk_create(media_items)
+        return instance
