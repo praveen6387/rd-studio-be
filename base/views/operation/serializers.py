@@ -38,6 +38,9 @@ class MediaLibrarySerializer(serializers.ModelSerializer):
             "created_at",
             "media_items",
             "media_library_items",
+            "studio_name",
+            "event_date",
+            "created_by",
         ]
         # read_only_fields = ["media_unique_id"]
 

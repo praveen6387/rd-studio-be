@@ -45,6 +45,9 @@ class MediaView(APIView):
             # Get form data
             media_type = request.data.get("media_type")
             media_items = request.FILES.getlist("media_items")
+            studio_name = request.data.get("studio_name")
+            event_date = request.data.get("event_date")
+            created_by = request.user.id
 
             if not media_type:
                 return Response({"message": "media_type is required"}, status=400)
@@ -85,6 +88,9 @@ class MediaView(APIView):
                 "media_description": request.data.get("media_description", ""),
                 "media_items": media_items_data,
                 "media_unique_id": media_unique_id,
+                "studio_name": studio_name,
+                "event_date": event_date,
+                "created_by": created_by,
             }
 
             # Create media library with items
@@ -110,6 +116,8 @@ class MediaView(APIView):
             media_library = MediaLibrary.objects.get(id=media_id, is_active=True)
             media_items = request.FILES.getlist("media_items")
             media_unique_id = media_library.media_unique_id
+            studio_name = request.data.get("studio_name", media_library.studio_name)
+            event_date = request.data.get("event_date", media_library.event_date)
             # Create S3 client once and reuse for all uploads in this request
             s3_client = get_s3_client()
 
@@ -141,6 +149,8 @@ class MediaView(APIView):
                 "media_description": request.data.get("media_description", media_library.media_description),
                 "media_items": media_items_data,
                 "media_unique_id": media_unique_id,
+                "studio_name": studio_name,
+                "event_date": event_date,
             }
 
             serializer = MediaLibrarySerializer(media_library, data=serializer_data, partial=True)

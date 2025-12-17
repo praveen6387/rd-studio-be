@@ -118,9 +118,15 @@ class MediaLibrary(models.Model):
     media_title = models.CharField(max_length=200, null=True, blank=True)
     media_description = models.TextField(null=True, blank=True)
 
+    studio_name = models.CharField(max_length=100, null=True, blank=True)
+    event_date = models.DateField(null=True, blank=True)
+
     is_favorite = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="media_libraries_created_by", default=None, null=True
+    )
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
