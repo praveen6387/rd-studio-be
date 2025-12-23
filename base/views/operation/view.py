@@ -20,8 +20,9 @@ class MediaView(APIView):
     # get all media
     def get(self, request, media_id=None):
         try:
+            current_user = request.user
             has_single_media = False
-            filter_kwargs = Q(is_active=True)
+            filter_kwargs = Q(is_active=True, created_by=current_user)
             if media_id:
                 filter_kwargs &= Q(id=media_id)
                 has_single_media = True
