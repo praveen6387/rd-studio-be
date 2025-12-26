@@ -5,9 +5,10 @@ import jwt
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from base.models import User
@@ -95,10 +96,102 @@ class LoginView(APIView):
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserView(APIView):
+class UserSignupView(APIView):
     permission_classes = [AllowAny]
 
+    def post(self, request):
+        try:
+            # Validate required fields
+            required_fields = ["email", "password", "phone", "first_name", "last_name"]
+            for field in required_fields:
+                if not request.data.get(field):
+                    return Response({"error": f"Missing required field: {field}"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if user already exists
+            if User.objects.filter(email=request.data.get("email")).exists():
+                return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if User.objects.filter(phone=request.data.get("phone")).exists():
+                return Response(
+                    {"error": "User with this phone number already exists"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create user
+            user = User.objects.create(
+                username=request.data.get("email"),  # Use email as username
+                email=request.data.get("email"),
+                password=request.data.get("password"),  # In production, hash this
+                phone=request.data.get("phone"),
+                first_name=request.data.get("first_name"),
+                last_name=request.data.get("last_name"),
+                role=request.data.get("role", 0),  # Default to customer
+                gender=request.data.get("gender"),
+                date_of_birth=request.data.get("date_of_birth"),
+            )
+
+            return Response(
+                {
+                    "message": "User created successfully",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "role": user.role,
+                        "phone": user.phone,
+                        "gender": user.gender,
+                        "date_of_birth": user.date_of_birth,
+                        "created_at": user.created_at,
+                    },
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to create user: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class CurrentUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
+        current_user = request.user
+
+        user = User.objects.filter(id=current_user.id).first()
+        return Response(
+            {
+                "message": "User retrieved successfully",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "role": user.role,
+                    "role_name": user.get_role_display(),
+                    "phone": user.phone,
+                    "gender": user.gender,
+                    "date_of_birth": user.date_of_birth,
+                    "created_at": user.created_at,
+                    "is_active": user.is_active,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class UserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_user = request.user
+        if current_user.role not in [3, 4]:
+            return Response(
+                {"error": "You are not authorized to access this endpoint"}, status=status.HTTP_403_FORBIDDEN
+            )
         users = User.objects.all()
         user_list = []
         for user in users:
@@ -109,6 +202,7 @@ class UserView(APIView):
                     "first_name": user.first_name,
                     "last_name": user.last_name,
                     "role": user.role,
+                    "role_name": user.get_role_display(),
                     "phone": user.phone,
                     "gender": user.gender,
                     "date_of_birth": user.date_of_birth,
@@ -175,6 +269,13 @@ class UserView(APIView):
             )
 
     def put(self, request):
+        current_user = request.user
+
+        if current_user.role not in [3, 4]:
+            return Response(
+                {"error": "You are not authorized to access this endpoint"}, status=status.HTTP_403_FORBIDDEN
+            )
+
         user_id = request.data.get("id")
         if not user_id:
             return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -228,6 +329,11 @@ class UserView(APIView):
             )
 
     def delete(self, request):
+        current_user = request.user
+        if current_user.role not in [3, 4]:
+            return Response(
+                {"error": "You are not authorized to access this endpoint"}, status=status.HTTP_403_FORBIDDEN
+            )
         user_id = request.data.get("id")
         if not user_id:
             return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)

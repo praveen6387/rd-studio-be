@@ -12,9 +12,10 @@ from django.db import models
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         (0, "customer"),
-        (1, "admin"),
-        (3, "super admin"),
-        (2, "operation"),
+        (1, "operation"),
+        (2, "lab"),
+        (3, "admin"),
+        (4, "super admin"),
     )
     gender_choices = (
         (0, "male"),
@@ -32,6 +33,7 @@ class User(AbstractUser):
     profile_picture = models.CharField(max_length=128, null=True)
     gender = models.CharField(max_length=50, choices=gender_choices, null=True)
     date_of_birth = models.DateField(null=True)
+    studio_name = models.CharField(max_length=100, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
