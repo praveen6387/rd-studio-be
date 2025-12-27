@@ -102,19 +102,19 @@ class UserSignupView(APIView):
     def post(self, request):
         try:
             # Validate required fields
-            required_fields = ["email", "password", "phone", "first_name", "last_name"]
+            required_fields = ["email", "password", "phone", "first_name", "last_name", "organization_name", "role"]
             for field in required_fields:
                 if not request.data.get(field):
                     return Response({"error": f"Missing required field: {field}"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Check if user already exists
-            if User.objects.filter(email=request.data.get("email")).exists():
-                return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
             if User.objects.filter(phone=request.data.get("phone")).exists():
                 return Response(
                     {"error": "User with this phone number already exists"}, status=status.HTTP_400_BAD_REQUEST
                 )
+
+            # Check if user already exists
+            if User.objects.filter(email=request.data.get("email")).exists():
+                return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Create user
             user = User.objects.create(
@@ -127,6 +127,7 @@ class UserSignupView(APIView):
                 role=request.data.get("role", 0),  # Default to customer
                 gender=request.data.get("gender"),
                 date_of_birth=request.data.get("date_of_birth"),
+                organization_name=request.data.get("organization_name"),
             )
 
             return Response(
