@@ -13,6 +13,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from base.models import User
 
+from .serializers import UserSerializer
+
 
 # JWT Token utilities
 def generate_jwt_token(user):
@@ -162,25 +164,8 @@ class CurrentUserView(APIView):
         current_user = request.user
 
         user = User.objects.filter(id=current_user.id).first()
-        return Response(
-            {
-                "message": "User retrieved successfully",
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "role": user.role,
-                    "role_name": user.get_role_display(),
-                    "phone": user.phone,
-                    "gender": user.gender,
-                    "date_of_birth": user.date_of_birth,
-                    "created_at": user.created_at,
-                    "is_active": user.is_active,
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+        serializer = UserSerializer(user)
+        return Response({"message": "User retrieved successfully", "user": serializer.data}, status=status.HTTP_200_OK)
 
 
 class UserView(APIView):
