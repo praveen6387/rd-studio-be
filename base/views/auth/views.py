@@ -93,7 +93,7 @@ class LoginView(APIView):
                     status=status.HTTP_200_OK,
                 )
             else:
-                return Response({"error": "Invalid password"}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"error": "Invalid Credentials"}, status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
