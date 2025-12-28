@@ -63,14 +63,14 @@ class LoginView(APIView):
         return Response({"message": "Login endpoint"})
 
     def post(self, request):
-        email = request.data.get("email")
+        phone = request.data.get("phone")
         password = request.data.get("password")
 
-        if not all([email, password]):
-            return Response({"error": "Email, and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not all([phone, password]):
+            return Response({"error": "Phone, and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(phone=phone)
             if user.password == password:  # In production, use proper password hashing
                 # Generate JWT token
                 tokens = generate_jwt_token(user)
@@ -132,9 +132,13 @@ class UserSignupView(APIView):
                 organization_name=request.data.get("organization_name"),
             )
 
+            tokens = generate_jwt_token(user)
+
             return Response(
                 {
                     "message": "User created successfully",
+                    "access": tokens["access"],
+                    "refresh": tokens["refresh"],
                     "user": {
                         "id": user.id,
                         "email": user.email,
