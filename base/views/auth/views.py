@@ -163,7 +163,7 @@ class CurrentUserView(APIView):
     def get(self, request):
         current_user = request.user
 
-        user = User.objects.filter(id=current_user.id).first()
+        user = User.objects.filter(id=current_user.id).prefetch_related("user_payment_transactions").first()
         serializer = UserSerializer(user)
         return Response({"message": "User retrieved successfully", "user": serializer.data}, status=status.HTTP_200_OK)
 
@@ -178,24 +178,8 @@ class UserView(APIView):
             return Response(
                 {"error": "You are not authorized to access this endpoint"}, status=status.HTTP_403_FORBIDDEN
             )
-        users = User.objects.all()
-        user_list = []
-        for user in users:
-            user_list.append(
-                {
-                    "id": user.id,
-                    "email": user.email,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "role": user.role,
-                    "role_name": user.get_role_display(),
-                    "phone": user.phone,
-                    "gender": user.gender,
-                    "date_of_birth": user.date_of_birth,
-                    "created_at": user.created_at,
-                    "is_active": user.is_active,
-                }
-            )
+        users = User.objects.prefetch_related("user_payment_transactions").all()
+        user_list = UserSerializer(users, many=True).data
         return Response(
             {"message": "Users retrieved successfully", "count": len(user_list), "users": user_list},
             status=status.HTTP_200_OK,

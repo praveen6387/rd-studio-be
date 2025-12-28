@@ -156,3 +156,33 @@ class MediaLibraryItem(models.Model):
     class Meta:
         db_table = "media_library_items"
         ordering = ["id"]
+
+
+class UserPaymentTransaction(models.Model):
+    TRANSACTION_STATUS_CHOICES = (
+        (0, "Pending"),
+        (1, "Completed"),
+        (2, "Failed"),
+    )
+    TRANSACTION_METHOD_CHOICES = (
+        (0, "UPI"),
+        (1, "Cash"),
+        (2, "Bank Transfer"),
+        (3, "Other"),
+    )
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_payment_transactions")
+    transaction_id = models.CharField(max_length=200, unique=True)
+    transaction_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_active_from_date = models.DateField(null=True, blank=True)
+    operation_count = models.IntegerField(default=0)
+    transaction_status = models.IntegerField(choices=TRANSACTION_STATUS_CHOICES, default=0)
+    transaction_method = models.IntegerField(choices=TRANSACTION_METHOD_CHOICES, default=0)
+    remarks = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "user_payment_transactions"
+        ordering = ["-id"]

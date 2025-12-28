@@ -5,4 +5,5 @@ from django.urls import include, path
 urlpatterns = [
     path("base/auth/", include("base.views.auth.urls")),
     path("base/operation/", include("base.views.operation.urls")),
+    path("base/payment/", include("base.views.payment.urls")),
 ]
