@@ -323,3 +323,22 @@ class UserView(APIView):
             return Response(
                 {"error": f"Failed to delete user: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class SocialLink(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def get():
+        pass
+
+    def post():
+        pass
+
+    def put(self, request):
+        self.current_user = request.user
+
+        social_link = request.data.get()

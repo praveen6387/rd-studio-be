@@ -31,7 +31,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, unique=True)
     role = models.IntegerField(choices=USER_TYPE_CHOICES, default=0)
     profile_picture = models.CharField(max_length=128, null=True)
-    gender = models.IntegerField(max_length=50, choices=GENDER_CHOICE, null=True)
+    gender = models.IntegerField(choices=GENDER_CHOICE, null=True)
     date_of_birth = models.DateField(null=True)
     organization_name = models.CharField(max_length=100, null=True)
 
