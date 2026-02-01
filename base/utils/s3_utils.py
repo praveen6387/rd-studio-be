@@ -2,6 +2,8 @@ import uuid
 from io import BytesIO
 
 import boto3
+from boto3.s3.transfer import TransferConfig
+from botocore.config import Config as BotoCoreConfig
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -20,6 +22,10 @@ def get_s3_client():
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         region_name=settings.AWS_S3_REGION_NAME,
+        config=BotoCoreConfig(
+            max_pool_connections=50,
+            retries={"max_attempts": 5, "mode": "adaptive"},
+        ),
     )
 
 
@@ -125,12 +131,26 @@ def upload_file_to_s3(file, folder_name="media", s3_client=None):
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         s3_key = f"{folder_name}/{unique_filename}"
 
-        # Upload file
+        # Configure high-performance transfer (multipart + concurrency)
+        transfer_config = TransferConfig(
+            multipart_threshold=5 * 1024 * 1024,  # 5MB
+            multipart_chunksize=8 * 1024 * 1024,  # 8MB parts
+            max_concurrency=10,
+            use_threads=True,
+        )
+
+        # Upload using client with TransferConfig (multipart + concurrency)
+        # Ensure buffer is at start
+        try:
+            file.seek(0)
+        except Exception:
+            pass
         s3_client.upload_fileobj(
             file,
             settings.AWS_STORAGE_BUCKET_NAME,
             s3_key,
-            ExtraArgs={"ContentType": file.content_type},
+            ExtraArgs={"ContentType": getattr(file, "content_type", "application/octet-stream")},
+            Config=transfer_config,
         )
 
         # Return the URL
