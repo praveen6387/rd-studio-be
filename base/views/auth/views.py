@@ -26,6 +26,8 @@ def generate_jwt_token(user):
     refresh["role"] = user.role
     refresh["is_admin"] = user.role in [1, 3]  # admin or super admin
     refresh["is_super_admin"] = user.role == 3
+    refresh["organization_name"] = user.organization_name
+
 
     return {
         "refresh": str(refresh),

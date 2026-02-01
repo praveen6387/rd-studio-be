@@ -46,7 +46,7 @@ class MediaView(APIView):
             # Get form data
             media_type = request.data.get("media_type")
             media_items = request.FILES.getlist("media_items")
-            studio_name = request.data.get("studio_name")
+            studio_name = request.data.get("studio_name", request.user.organization_name)
             event_date = request.data.get("event_date")
             created_by = request.user.id
 
@@ -65,22 +65,26 @@ class MediaView(APIView):
             media_items_data = []
             for file in media_items:
                 try:
+                    page_type_file_name = file.name
+                    page_type, file_name = page_type_file_name.split("_", 1)
+                    
                     # Upload file to S3, reusing the same client
                     file_url = upload_file_to_s3(
                         file,
                         folder_name=f"media_library/{media_unique_id}",
                         s3_client=s3_client,
                     )
-                    # Prepare media item data
+                    # # Prepare media item data
                     media_item_data = {
                         "media_url": file_url,
-                        "media_item_title": file.name,
-                        "media_item_description": f"Uploaded file: {file.name}",
+                        "media_item_title": file_name,
+                        "page_type": page_type,
+                        "media_item_description": f"Uploaded file: {file_name}",
                     }
                     media_items_data.append(media_item_data)
 
                 except Exception as e:
-                    return Response({"message": f"Failed to upload file {file.name}: {str(e)}"}, status=500)
+                    return Response({"message": f"Failed to upload file {file_name}: {str(e)}"}, status=500)
 
             # Prepare data for serializer
             serializer_data = {

@@ -13,6 +13,7 @@ class MediaLibraryItemSerializer(serializers.ModelSerializer):
             "media_url",
             "media_item_title",
             "media_item_description",
+            "page_type",
             "created_at",
             "is_active",
             "media_library",

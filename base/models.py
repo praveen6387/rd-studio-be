@@ -139,6 +139,12 @@ class MediaLibrary(models.Model):
 
 class MediaLibraryItem(models.Model):
 
+    PAGE_TYPE_CHOICES = (
+        (0, "Front"),
+        (1, "Middle"),
+        (2, "Back"),
+    )
+
     id = models.AutoField(primary_key=True)
     media_library = models.ForeignKey(MediaLibrary, on_delete=models.CASCADE, related_name="media_library_items")
 
@@ -148,6 +154,8 @@ class MediaLibraryItem(models.Model):
     # Content
     media_item_title = models.CharField(max_length=200, null=True, blank=True)
     media_item_description = models.TextField(null=True, blank=True)
+
+    page_type = models.IntegerField(choices=PAGE_TYPE_CHOICES, default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
