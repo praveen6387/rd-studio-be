@@ -135,7 +135,7 @@ def upload_file_to_s3(file, folder_name="media", s3_client=None):
         transfer_config = TransferConfig(
             multipart_threshold=5 * 1024 * 1024,  # 5MB
             multipart_chunksize=8 * 1024 * 1024,  # 8MB parts
-            max_concurrency=10,
+            max_concurrency=6,
             use_threads=True,
         )
 

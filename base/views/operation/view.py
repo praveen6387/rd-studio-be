@@ -112,7 +112,7 @@ class MediaView(APIView):
                 }
 
             media_items_data = [None] * len(prepared_items)
-            max_workers = min(8, max(1, len(prepared_items)))
+            max_workers = min(12, max(1, len(prepared_items)))
             future_to_item = {}
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for item in prepared_items:
