@@ -6,6 +6,7 @@ from io import BytesIO
 import requests
 from django.db.models import Q
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from base.views.auth.serializers import UserSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -39,7 +40,13 @@ class MediaView(APIView):
                 media_libraries = media_libraries.all()
 
             media_libraries = MediaLibrarySerializer(media_libraries, many=not has_single_media)
-            return Response({"message": "media successfully retrieved", "data": media_libraries.data})
+            return Response(
+                {
+                    "message": "media successfully retrieved", 
+                    "user": UserSerializer(current_user).data,
+                    "data": media_libraries.data
+                }
+            )
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
 
@@ -47,11 +54,15 @@ class MediaView(APIView):
     def post(self, request):
         try:
             # Get form data
+            current_user = request.user
             media_type = request.data.get("media_type")
             media_items = request.FILES.getlist("media_items")
-            studio_name = request.data.get("studio_name", request.user.organization_name)
             event_date = request.data.get("event_date")
-            created_by = request.user.id
+            created_by = current_user.id
+            if current_user.role > 1:
+                studio_name = request.data.get("studio_name", current_user.organization_name)
+            else:
+                studio_name = current_user.organization_name
 
             if not media_type:
                 return Response({"message": "media_type is required"}, status=400)

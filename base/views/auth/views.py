@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from base.models import User
+from base.models import User, UserSocialLinks
 
 from .serializers import UserSerializer
 
@@ -169,9 +169,39 @@ class CurrentUserView(APIView):
     def get(self, request):
         current_user = request.user
 
-        user = User.objects.filter(id=current_user.id).prefetch_related("user_payment_transactions").first()
+        user = User.objects.filter(id=current_user.id).prefetch_related("user_payment_transactions", "user_social_links").first()
         serializer = UserSerializer(user)
         return Response({"message": "User retrieved successfully", "user": serializer.data}, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        try:
+            current_user = request.user
+            user = User.objects.get(id=current_user.id)
+
+            social_links = request.data.get("social_links")
+            if not social_links:
+                return Response({"error": "Social links are required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not isinstance(social_links, list):
+                return Response({"error": "Social links must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            UserSocialLinks.objects.filter(user=user).delete()
+
+            social_links_data = []
+            for social_link in social_links:
+                social_links_data.append(UserSocialLinks(user=user, social_media_platform=social_link.get("social_media_platform"), social_media_url=social_link.get("social_media_url")))
+
+            UserSocialLinks.objects.bulk_create(social_links_data)
+
+            return Response({"message": "Social links updated successfully"}, status=status.HTTP_200_OK)
+
+        
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({"error": f"Failed to update user: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class UserView(APIView):

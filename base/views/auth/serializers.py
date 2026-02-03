@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from base.models import User, UserPaymentTransaction
+from base.models import User, UserPaymentTransaction, UserSocialLinks
 
 
 class UserPaymentTransactionSerializer(serializers.ModelSerializer):
@@ -12,10 +12,16 @@ class UserPaymentTransactionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserSocialLinksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSocialLinks
+        fields = "__all__"
+
 class UserSerializer(serializers.ModelSerializer):
     role_name = serializers.CharField(source="get_role_display", read_only=True)
     gender_name = serializers.CharField(source="get_gender_display", read_only=True)
     user_payment_transactions = UserPaymentTransactionSerializer(many=True, read_only=True)
+    user_social_links = UserSocialLinksSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -34,4 +40,5 @@ class UserSerializer(serializers.ModelSerializer):
             "created_at",
             "is_active",
             "user_payment_transactions",
+            "user_social_links",
         ]

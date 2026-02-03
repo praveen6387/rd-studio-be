@@ -51,6 +51,19 @@ class User(AbstractUser):
         db_table = "users"
 
 
+class UserSocialLinks(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_social_links")
+    social_media_platform = models.CharField(max_length=20)
+    social_media_url = models.URLField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "user_social_links"
+        verbose_name_plural = "User Social Links"
+
 class UserAddress(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
