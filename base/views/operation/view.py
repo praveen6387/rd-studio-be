@@ -64,6 +64,9 @@ class MediaView(APIView):
             else:
                 studio_name = current_user.organization_name
 
+            if current_user.remaing_credit <= 0:
+                return Response({"message": "You have no remaining credit"}, status=400)
+
             if not media_type:
                 return Response({"message": "media_type is required"}, status=400)
 
@@ -155,6 +158,9 @@ class MediaView(APIView):
             serializer = MediaLibrarySerializer(data=serializer_data)
             if serializer.is_valid():
                 serializer.save()
+                current_user.remaining_credit -= 1
+                current_user.used_credit += 1
+                current_user.save()
                 return Response(
                     {
                         "message": "Media library created successfully",

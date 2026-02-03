@@ -39,6 +39,8 @@ class UserSerializer(serializers.ModelSerializer):
             "organization_name",
             "created_at",
             "is_active",
+            "remaining_credit",
+            "used_credit",
             "user_payment_transactions",
             "user_social_links",
         ]

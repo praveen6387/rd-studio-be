@@ -38,6 +38,8 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+    remaining_credit = models.IntegerField(default=0)
+    used_credit = models.IntegerField(default=0)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
