@@ -6,7 +6,7 @@ from io import BytesIO
 import requests
 from django.db.models import Q
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from base.views.auth.serializers import UserSerializer
+from base.views.auth.serializers import UserPublicSerializer, UserSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -257,10 +257,16 @@ class ExternalMediaIdView(APIView):
 
             media_library = (
                 MediaLibrary.objects.filter(media_unique_id=media_unique_id)
+                .select_related("created_by")
                 .prefetch_related("media_library_items")
                 .first()
             )
+            created_by = media_library.created_by
             media_libraries = MediaLibrarySerializer(media_library)
-            return Response({"message": "media successfully retrieved", "data": media_libraries.data})
+            return Response({
+                "message": "media successfully retrieved", 
+                "user": UserPublicSerializer(created_by).data,
+                "data": media_libraries.data
+            })
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)

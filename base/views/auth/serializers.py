@@ -44,3 +44,14 @@ class UserSerializer(serializers.ModelSerializer):
             "user_payment_transactions",
             "user_social_links",
         ]
+
+
+
+class UserPublicSerializer(serializers.ModelSerializer):
+    user_social_links = UserSocialLinksSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "user_social_links",
+        ]
