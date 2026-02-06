@@ -147,6 +147,9 @@ class MediaLibrary(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
+    instagram_profile_url = models.CharField(max_length=100, null=True, blank=True)
+    whatsapp_number = models.CharField(max_length=20, null=True, blank=True)
+
     class Meta:
         db_table = "media_libraries"
         verbose_name_plural = "Media Libraries"

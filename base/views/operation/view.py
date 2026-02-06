@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from base.models import MediaLibrary
+from base.models import MediaLibrary, User
 from base.utils.s3_utils import get_s3_client, upload_file_to_s3
 from base.views.operation.serializers import MediaLibrarySerializer
 
@@ -59,12 +59,25 @@ class MediaView(APIView):
             media_items = request.FILES.getlist("media_items")
             event_date = request.data.get("event_date")
             created_by = current_user.id
-            if current_user.role > 1:
-                studio_name = request.data.get("studio_name", current_user.organization_name)
-            else:
-                studio_name = current_user.organization_name
 
-            if current_user.remaing_credit <= 0:
+            if current_user.role > 1:
+                studio_name = request.data.get("studio_name")
+                instagram_profile_url = request.data.get("instagram_profile_url")
+                whatsapp_number = request.data.get("whatsapp_number")
+            else:
+                instagram_profile_url = None
+                whatsapp_number = None
+
+                studio_name = current_user.organization_name
+                social_links = current_user.user_social_links.all()
+                for social_link in social_links:
+                    if social_link.social_media_platform == 'instagram':
+                        instagram_profile_url = social_link.social_media_url
+                    elif social_link.social_media_platform == 'whatsapp':
+                        whatsapp_number = social_link.social_media_url
+                
+            
+            if current_user.remaining_credit <= 0:
                 return Response({"message": "You have no remaining credit"}, status=400)
 
             if not media_type:
@@ -152,14 +165,16 @@ class MediaView(APIView):
                 "studio_name": studio_name,
                 "event_date": event_date,
                 "created_by": created_by,
+                "instagram_profile_url": instagram_profile_url,
+                "whatsapp_number": whatsapp_number,
             }
 
             # Create media library with items
             serializer = MediaLibrarySerializer(data=serializer_data)
             if serializer.is_valid():
                 serializer.save()
-                current_user.remaining_credit -= 1
-                current_user.used_credit += 1
+                current_user.remaining_credit = current_user.remaining_credit - 1
+                current_user.used_credit = current_user.used_credit + 1
                 current_user.save()
                 return Response(
                     {

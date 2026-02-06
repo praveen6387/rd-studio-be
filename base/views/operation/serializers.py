@@ -42,6 +42,8 @@ class MediaLibrarySerializer(serializers.ModelSerializer):
             "studio_name",
             "event_date",
             "created_by",
+            "instagram_profile_url",
+            "whatsapp_number",
         ]
         # read_only_fields = ["media_unique_id"]
 
